@@ -6,7 +6,6 @@ const crypto = require('crypto');
 //banco de dados = nome, email, data de nascimento, senha(hash)
 // e se tá validado
 
-
 /*
 
 DATABASE - GATUNO
@@ -15,11 +14,15 @@ TABLE - tb_user
 
 COLUNAS - 
 
+create table tb_user(
     ds_email VARCHAR(100) NOT NULL PRIMARY KEY,
     nm_user VARCHAR(60),
     dt_nasc DATE,
-    ds_password VARCHAR(20),
+    ds_password VARCHAR(513),
+    ds_token VARCHAR(513),
     is_verified BOOLEAN
+
+)
 
 */
 
@@ -70,12 +73,12 @@ function entrar(login, callback){
 //pronto
 function adicionarUsuario(user, callback){
   var sql = `INSERT INTO tb_user(nm_user, ds_email, dt_nasc,
-    ds_password, is_verified) VALUES (?, ?, ?, ?, FALSE)`
+    ds_token, ds_password, is_verified) VALUES (?, ?, ?, ?, ?, FALSE)`
   var isWorking = 3;
   ds_password = createRandomPassword();
   var hash = crypto.createHash('sha512');
   var password = hash.update(ds_password, 'utf-8');
-  conn.query(sql, [user.nm_user, user.ds_email, user.dt_nasc, password.digest('base64')], (err, rows, fields) => {
+  conn.query(sql, [user.nm_user, user.ds_email, user.dt_nasc, password.digest('base64'), null], (err, rows, fields) => {
     if(err){
       if(err.sqlState == 23000){
         isWorking = 2;
@@ -87,7 +90,7 @@ function adicionarUsuario(user, callback){
         from: 'gatunosec@gmail.com',
         to: user.ds_email,
         subject: 'Cadastro em GATUNO',
-        html: `<h3>Cadastro em GATUNO quase concluído, confirme seu email com o código:<b>${ds_password} </b></h3>
+        html: `<h3>Cadastro em GATUNO quase concluído, confirme seu email com o código: <strong>${ds_password} </strong></h3>
               <a href="http://localhost:3000/mudar-senha?ds_email=${user.ds_email}">Clique aqui!</a>`
       };
       transporter.sendMail(mailCadastro, function(error, info){
@@ -104,19 +107,13 @@ function adicionarUsuario(user, callback){
 
 
 //pronto
-function verificarEmail(email){
-  var validator = require("email-validator");
-  if(validator.validate(email) = false)
-    document.getElementById("msg").innerHTML = "Digite um email válido!";
-  else
-  document.getElementById("msg").innerHTML = " ";
-}
+
 
 
 //pronto
  function isFirstTime(login, callback){
    var sql = `SELECT is_verified FROM tb_user WHERE ds_email = ? LIMIT 1`
-   conn.query(sql, login.ds_email, (err, result, fields) => {
+   conn.query(sql, [login.ds_email], (err, result, fields) => {
        if(err){
            console.error(err)
        } else {
@@ -125,31 +122,67 @@ function verificarEmail(email){
    })
  }
 
-//pronto
-//funcao novo usuario
-function updatePassword(user, callback){
-  let sql = `UPDATE tb_user SET ds_password = ?, is_verified = FALSE WHERE ds_email = ?`
-  let hash = crypto.createHash('sha512')
-  let password = hash.update(user.ds_password1, 'utf-8')
-  conn.query(sql, [password.digest('base64'), user.ds_email], (err, result, fields) => {
-      if(err){
-          console.error(err)
-      } else {
-          updateVerificado(user)
-          console.log("updated password")
-      }
-  })
+
+function setEmailDisable(){
+  
 }
 
 
 //pronto
+//funcao novo usuario
+function updatePassword(user, callback){
+  var sql = `UPDATE tb_user SET ds_password = ? WHERE ds_email = ?`
+  var hash = crypto.createHash('sha512')
+  var password = hash.update(user.ds_password1, 'utf-8')
+  conn.query(sql, [password.digest('base64'), user.ds_email], (err, result, fields) => {
+      if(err){
+          console.error(err)
+      } else {
+          //updateVerificado(user)
+          console.log("updated password only")
+      }
+  })
+}
+
+function validateToken(user,callback){
+  var sql = `SELECT ds_token FROM tb_user WHERE ds_token = ?`
+  var isWorking = 3;
+  var hash = crypto.createHash('sha512')
+  var token = hash.update(user.ds_token, 'utf-8')
+  conn.query(sql, [token.digest('base64')], (err, result, fields) => {
+    if(err){
+      isWorking = 2
+      console.error(err)
+      callback(isWorking)
+    } else {
+      console.log("token valido")
+      console.log("token: " + result)
+      if(result == token.digest('base64')){
+        isWorking = 3
+        updatePassword(user)
+      } else {
+        isWorking = 1;
+        callback(isWorking)
+      }
+      
+    }
+  })
+}
+
+
+
+
+
+
+
+//pronto
 function updateVerificado(user, callback){
-  let sql = `UPDATE tb_user SET is_verified = TRUE WHERE ds_email = ?`
+  var sql = `UPDATE tb_user SET is_verified = TRUE WHERE ds_email = ?`
   conn.query(sql, [user.ds_email], (err, result, fields) => {
       if(err){
           console.error(err)
       } else {
-          console.log("updated verify")
+          console.log("updated verify only")
       }
   })
 }
@@ -158,9 +191,9 @@ function updateVerificado(user, callback){
 //pronto
 //funcao esquecer a senha
 function updatePasswordEmail(user, callback){
-  let sql = `UPDATE tb_user SET ds_password = ?, is_verified = TRUE WHERE ds_email = ?`
-  let hash = crypto.createHash('sha512')
-  let password = hash.update(user.ds_password, 'utf-8')
+  var sql = `UPDATE tb_user SET ds_password = ?, is_verified = TRUE WHERE ds_email = ?`
+  var hash = crypto.createHash('sha512')
+  var password = hash.update(user.ds_password, 'utf-8')
   conn.query(sql, [password.digest('base64'), user.ds_email], (err, result, fields) => {
       if(err){
           console.error(err)
@@ -172,7 +205,7 @@ function updatePasswordEmail(user, callback){
 
 //pronto
 function recoverPassword(user, callback){
-  let sql = `SELECT ds_email FROM tb_user WHERE ds_email = ? and dt_nasc = ?`
+  var sql = `SELECT ds_email FROM tb_user WHERE ds_email = ? and dt_nasc = ?`
   conn.query(sql, [user.ds_email, user.dt_nasc], (err, result, fields) => {
       if(err){
           console.log(err)
@@ -211,10 +244,10 @@ var transporter = nodemailer.createTransport({
   auth: {
     user: 'gatunosec@gmail.com', //email e senha do gatuno
     pass: 'gatuino12'
-  },
-    tls: {
-        rejectUnauthorized: false
-    }
+   }//,
+  //   tls: {
+  //       rejectUnauthorized: false
+  //   }
 });
 
 // var mailCadastro = {
@@ -246,5 +279,6 @@ module.exports = {
   isFirstTime: isFirstTime,
   updatePassword: updatePassword,
   updatePasswordEmail: updatePasswordEmail,
-  recoverPassword: recoverPassword
+  recoverPassword: recoverPassword,
+  validateToken: validateToken
 }

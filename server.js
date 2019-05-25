@@ -1,5 +1,6 @@
 const express = require('express');
 const body_parser = require('body-parser');
+const url = require('url');
 const app = express()
 const port = 3000
 
@@ -83,13 +84,25 @@ app.get('/mudar-senha', function(req, res) {
 })
 
 app.post('/mudar-senha', (req, res) => {
-    params = ["ds_password", "ds_password1", "ds_password2"]
+    params = ["cd_username","ds_email","ds_token", "ds_password1", "ds_password2"]
     if(!verifyBodyRequest(req.body, params)){
         res.send("Faltando Parametro")
         return
     }
     if(req.body.ds_password1 == req.body.ds_password2){
-        index.updatePassword(req.body)
+        index.updatePassword(req.body, isWorking => {
+            switch(isWorking){
+                case 1:
+                //token invalido
+                break;
+                case 2:
+//erro sql      
+                break;
+                case 3:
+//deu bom meu chapa
+                break;
+            }
+        })
         res.render("login")
     }
 })
