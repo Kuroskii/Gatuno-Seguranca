@@ -14,17 +14,16 @@ GO
 
 -- Create a new table called 'TableName' in schema 'SchemaName'
 -- Drop the table if it already exists
-IF OBJECT_ID('SchemaName.tb_User', 'U') IS NOT NULL
-DROP TABLE SchemaName.tb_User
+IF OBJECT_ID('gatuno.tb_User', 'U') IS NOT NULL
+DROP TABLE gatuno.tb_User
 GO
 -- Create the table in the specified schema
-CREATE TABLE SchemaName.tb_User
+CREATE TABLE gatuno.tb_User
 (
-    cd_user INT NOT NULL PRIMARY KEY, -- auto_increment
+    ds_email VARCHAR(100) NOT NULL PRIMARY KEY,
     nm_user VARCHAR(60),
-    ds_email VARCHAR(100),
     dt_nasc DATE,
-    ds_password VARCHAR(20),
+    ds_password VARCHAR(513),
     is_verified BOOLEAN
 );
 GO
