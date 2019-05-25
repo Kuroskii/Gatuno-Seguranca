@@ -55,10 +55,6 @@ app.post('/cadastro', (req, res) =>{
 })
 
 
-
-
-
-
 //recuperar ok
 
 app.get('/recuperar', function(req, res) {
