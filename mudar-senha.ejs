@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="css/index.css">
     <script src="js/index.js"></script>
     <script>
-
         function validatePassword(password) {
             if (password.length === 0) {
                 document.getElementById("msg").innerHTML = "";
@@ -70,9 +69,7 @@
                 query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
             }
             var jsonAsString = JSON.stringify(query);
-            var a = jsonAsString.substr(47).slice(0,-2);
-            document.getElementById('email').value = a;
-            document.getElementById('email').disabled =true;
+            document.getElementById('email').value = jsonAsString.substr(47).slice(0,-2);
         }
     </script>
 </head>
@@ -87,18 +84,18 @@
     <section id="divMaster">
         <div id="tudo">
             <h1>Mudar Senha</h1>
-            <form id="formSetPassword"action="http://localhost:3000/mudar-senha" method="post">
+            <form action="http://localhost:3000/mudar-senha" method="post">
 
                 <div>
                     <p>Nome de Usuário</p>
-                    <input type="text" id="username" name="cd_username" class="textfield" size="50" autocomplete="off" required>
+                    <input type="text" id="username" name="ds_username" class="textfield" size="50" autocomplete="off" required>
                 </div>
                 <div>
                     <span id="msg0"></span>
                 </div>
                 <div>
                     <p>E-mail</p>
-                    <input type="text" id="email" name="ds_email" class="textfield" disabled size="50" autocomplete="off" required>
+                    <input type="text" id="email" name="ds_email" class="textfield" readonly="readonly" size="50" autocomplete="off" required>
                 </div>
                 <div>
                     <p>Código</p>

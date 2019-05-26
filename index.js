@@ -2,9 +2,10 @@ const nodemailer = require('nodemailer');
 const mysql = require('mysql');
 const crypto = require('crypto');
 
-
 //banco de dados = nome, email, data de nascimento, senha(hash)
 // e se tá validado
+
+//ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password'
 
 /*
 
@@ -26,7 +27,6 @@ create table tb_user(
 
 */
 
-
 var conn = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -39,7 +39,6 @@ conn.connect(function(err){
   console.log("BD connected!");
 });
 
-
 //assim que entra no botão "Entrar"
 //pronto
 function entrar(login, callback){
@@ -47,7 +46,7 @@ function entrar(login, callback){
   var password = hash.update(login.ds_password, 'utf-8');
   var sql = `SELECT ds_password = ? as cd_status FROM tb_user WHERE
   ds_email = ? LIMIT 1`  
-  var cd_status = "DEFAULT_RESULT";
+  var cd_status = "DEFAULT_RESULT" && 0;
   conn.query(sql, [password.digest('base64'), login.ds_email], (err, result, fields) =>{
     if(err){
       console.error(err);
@@ -68,17 +67,15 @@ function entrar(login, callback){
   })
 }
 
-
-
 //pronto
 function adicionarUsuario(user, callback){
   var sql = `INSERT INTO tb_user(nm_user, ds_email, dt_nasc,
     ds_token, ds_password, is_verified) VALUES (?, ?, ?, ?, ?, FALSE)`
   var isWorking = 3;
-  ds_password = createRandomPassword();
+  ds_token = createRandomPassword();
   var hash = crypto.createHash('sha512');
-  var password = hash.update(ds_password, 'utf-8');
-  conn.query(sql, [user.nm_user, user.ds_email, user.dt_nasc, password.digest('base64'), null], (err, rows, fields) => {
+  var token = hash.update(ds_token, 'utf-8');
+  conn.query(sql, [user.nm_user, user.ds_email, user.dt_nasc, token.digest('base64'), null], (err, rows, fields) => {
     if(err){
       if(err.sqlState == 23000){
         isWorking = 2;
@@ -90,7 +87,7 @@ function adicionarUsuario(user, callback){
         from: 'gatunosec@gmail.com',
         to: user.ds_email,
         subject: 'Cadastro em GATUNO',
-        html: `<h3>Cadastro em GATUNO quase concluído, confirme seu email com o código: <strong>${ds_password} </strong></h3>
+        html: `<h3>Cadastro em GATUNO quase concluído, confirme seu email com o código: <strong>${ds_token} </strong></h3>
               <a href="http://localhost:3000/mudar-senha?ds_email=${user.ds_email}">Clique aqui!</a>`
       };
       transporter.sendMail(mailCadastro, function(error, info){
@@ -105,11 +102,6 @@ function adicionarUsuario(user, callback){
   })
 }
 
-
-//pronto
-
-
-
 //pronto
  function isFirstTime(login, callback){
    var sql = `SELECT is_verified FROM tb_user WHERE ds_email = ? LIMIT 1`
@@ -122,58 +114,43 @@ function adicionarUsuario(user, callback){
    })
  }
 
-
-function setEmailDisable(){
-  
-}
-
-
 //pronto
 //funcao novo usuario
 function updatePassword(user, callback){
-  var sql = `UPDATE tb_user SET ds_password = ? WHERE ds_email = ?`
+  var sql = `UPDATE tb_user SET ds_password = ?, ds_username = ? WHERE ds_email = ?`
   var hash = crypto.createHash('sha512')
   var password = hash.update(user.ds_password1, 'utf-8')
-  conn.query(sql, [password.digest('base64'), user.ds_email], (err, result, fields) => {
+  conn.query(sql, [password.digest('base64'), user.ds_username, user.ds_email], (err, result, fields) => {
       if(err){
           console.error(err)
       } else {
-          //updateVerificado(user)
-          console.log("updated password only")
+          updateVerificado(user)
+          console.log("updated password and username")
       }
   })
 }
 
 function validateToken(user,callback){
-  var sql = `SELECT ds_token FROM tb_user WHERE ds_token = ?`
+  var sql = `SELECT ds_token FROM tb_user WHERE ds_email = ?`
   var isWorking = 3;
   var hash = crypto.createHash('sha512')
   var token = hash.update(user.ds_token, 'utf-8')
-  conn.query(sql, [token.digest('base64')], (err, result, fields) => {
+  conn.query(sql, [user.ds_email], (err, result, fields) => {
     if(err){
       isWorking = 2
       console.error(err)
-      callback(isWorking)
     } else {
-      console.log("token valido")
-      console.log("token: " + result)
-      if(result == token.digest('base64')){
+      console.log("token: %j", result[0].ds_token)
+      if(result[0].ds_token == token.digest('base64')){
         isWorking = 3
         updatePassword(user)
       } else {
-        isWorking = 1;
-        callback(isWorking)
+        isWorking = 1
       }
-      
     }
+    callback(isWorking)
   })
 }
-
-
-
-
-
-
 
 //pronto
 function updateVerificado(user, callback){
@@ -186,7 +163,6 @@ function updateVerificado(user, callback){
       }
   })
 }
-
 
 //pronto
 //funcao esquecer a senha
@@ -235,10 +211,6 @@ function recoverPassword(user, callback){
   })
 }
 
-
-
-
-
 var transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -249,20 +221,6 @@ var transporter = nodemailer.createTransport({
   //       rejectUnauthorized: false
   //   }
 });
-
-// var mailCadastro = {
-//   from: 'gatunosec@gmail.com',
-//   to: ds_email,
-//   subject: 'Cadastro em GATUNO',
-//   html: `<h1>Cadastro em GATUNO quase concluído, falta apenas confirmar o seu email com a senha: ${ds_password}</h1>
-//          <a href="http://localhost:3000/mudar-senha?cd_user=${cd_user}">Clique aqui!</a>`
-// };
-
-
-
-
-
-
 
 function createRandomPassword(){
   var text = "";
