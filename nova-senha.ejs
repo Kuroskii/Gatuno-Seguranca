@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Gatuno</title>
+    <meta charset="utf-8">
+    <link rel="icon" href="Logo1.jpeg" type="image/x-icon"/>
+    <link rel="shortcut icon" href="Logo1.jpeg" type="image/x-icon"/>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/index.js"></script>
+    <script>
+        function validatePassword(password) {
+            if (password.length === 0) {
+                document.getElementById("msg").innerHTML = "";
+                return;
+            }
+            var matchedCase = new Array();
+            matchedCase.push("[$@$!%*#?&]"); // Special Charector
+            matchedCase.push("[A-Z]");      // Uppercase Alpabates
+            matchedCase.push("[0-9]");      // Numbers
+            matchedCase.push("[a-z]");     // Lowercase Alphabates
+
+            var ctr = 0;
+            for (var i = 0; i < matchedCase.length; i++) {
+                if (new RegExp(matchedCase[i]).test(password)) {
+                    ctr++;
+                }
+            }
+            var color = "";
+            var strength = "";
+            switch (ctr) {
+                case 0:
+                case 1:
+                case 2:
+                    strength = "Senha Fraca";
+                    color = "red";
+                    document.getElementById("submit").disabled =true;
+                    break;
+                case 3:
+                    strength = "Senha Mediana";
+                    color = "orange";
+                    document.getElementById("submit").disabled =true;
+                    break;
+                case 4:
+                    strength = "Senha Forte!";
+                    color = "green";
+                    document.getElementById("submit").disabled =false;
+                    break;
+            }
+            document.getElementById("msg").innerHTML = strength;
+            document.getElementById("msg").style.color = color;
+        }
+        function Conferir(password1,password2) {
+            if(password2 != password1){
+                document.getElementById("msg2").innerHTML = "As senhas digitadas não conferem.";
+            document.getElementById("msg2").style.color = "red";
+            document.getElementById("submit").disabled =true;      
+        }
+            else{
+            document.getElementById("msg2").innerHTML = " "; 
+            document.getElementById("submit").disabled =false;
+            }
+        }
+
+        function parseQuery(queryString) {
+            var query = {};
+            var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+            for (var i = 0; i < pairs.length; i++) {
+                var pair = pairs[i].split('=');
+                query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+            var jsonAsString = JSON.stringify(query);
+            document.getElementById('email').value = jsonAsString.substr(47).slice(0,-2);
+        }
+    </script>
+</head>
+
+
+<!-- tela de redefinição de senha (ao expirar ou esquecer) -->
+
+<body onload="parseQuery(window.location.href)">
+    <section id="divMaster">
+        <div id="tudo">
+            <h1>Mudar Senha</h1>
+            <form action="http://localhost:3000/mudar-senha" method="post">
+
+                <div>
+                    <p>Nome de Usuário</p>
+                    <input type="text" id="username" name="ds_username" class="textfield" readonly="readonly" size="50" autocomplete="off" required>
+                </div>
+                <div>
+                    <span id="msg0"></span>
+                </div>
+                <div>
+                    <p>Nova senha</p>
+                    <input type="password" id="senha" onkeyup="validatePassword(this.value)" name="ds_password1" class="textfield" size="50" autocomplete="off" required>
+                    
+                </div>
+                <div>
+                    <span id="msg"></span>
+                </div>
+                <div>
+                    <p>Confirme a senha</p>
+                    <input type="password" id="senha2" name="ds_password2" onkeyup="Conferir(ds_password1.value, this.value)" class="textfield" size="50" autocomplete="off" required>
+                </div>
+                <div>
+                    <span id="msg2"></span>
+                </div>
+            </br>
+                <div class="enviar">
+                </br>
+                    <button type="submit" id="submit" disabled >Salvar</button>
+                </div>
+            </form>            
+        </br>
+        </div>
+    </section>
+</body>
+</html>
