@@ -12,21 +12,13 @@ app.use(express.static(__dirname + '/views'))
 
 app.set('view engine', 'ejs')
 
-
-
 app.get('/feed', function(req, res) {
     res.render('feed');
 })
 
-
-
-
 // app.get('*', function(req, res) {
 //     res.render('erro');
 // })
-
-
-
 
 //cadastro ok
 
@@ -55,7 +47,6 @@ app.post('/cadastro', (req, res) =>{
     return;
 })
 
-
 //recuperar ok
 
 app.get('/recuperar', function(req, res) {
@@ -74,42 +65,37 @@ app.post('/recuperar', (req, res) => {
     res.render('login');
 })
 
-
-
-
-
-
 app.get('/mudar-senha', function(req, res) {
     res.render('mudar-senha');
 })
 
 app.post('/mudar-senha', (req, res) => {
-    params = ["cd_username","ds_email","ds_token", "ds_password1", "ds_password2"]
+    params = ["ds_username", "ds_email", "ds_token", "ds_password1", "ds_password2"]
     if(!verifyBodyRequest(req.body, params)){
         res.send("Faltando Parametro")
-        return
+        return;
     }
-    if(req.body.ds_password1 == req.body.ds_password2){
-        index.updatePassword(req.body, isWorking => {
-            switch(isWorking){
-                case 1:
-                //token invalido
-                break;
-                case 2:
-//erro sql      
-                break;
-                case 3:
-//deu bom meu chapa
-                break;
-            }
-        })
-        res.render("login")
+    index.validateTime(req.body, isWorking =>{
+        if(!isWorking){
+            res.render(senha-expirada);
+        } else{
+            if(req.body.ds_password1 == req.body.ds_password2){
+                index.validateToken(req.body, isWorking => {
+                    if(isWorking == 1){
+                        res.send("Token invalido!");
+                    }
+                    if(isWorking == 2){
+                        res.send("Erro sql");
+                    }
+                    if(isWorking == 3){
+                        res.render('login');
+                    }
+                })
+                return;
+        }
     }
+    })
 })
-
-
-
-
 
 //login pronto
 
@@ -121,8 +107,16 @@ app.get('/login', function(req, res) {
     res.render('login');
 })
 
+app.get('/senha-expirada', function(req, res) {
+    res.render('senha-expirada');
+})
+
+app.get('/nova-senha', function(req, res) {
+    res.render('nova-senha');
+})
+
 app.post('/login', (req, res) => {
-    params = ["ds_email", "ds_password"]
+    params = ["ds_username", "ds_password"]
     if(!verifyBodyRequest(req.body, params)){
         res.send("Preencha todos os campos")
         return
@@ -137,10 +131,10 @@ app.post('/login', (req, res) => {
         if(cd_status == "SUCCESS"){
             index.isFirstTime(req.body, is_first_time => {
                 if(!is_first_time){
-                    res.render(`/mudar-senha?ds_email=${req.body.ds_email}`)
+                    res.send('login não verificado');
                 } else {
-                    //res.cookie('usuario', req.body.ds_email)
-                    res.render('/feed')
+                    res.cookie('usuario', req.body.ds_username)
+                    res.render('feed')
                 }
             })
         }
@@ -148,13 +142,10 @@ app.post('/login', (req, res) => {
     return;
 })
 
-
-
-
-// app.post('/logout', (req, res) => {
-//     res.clearCookie('usuario')
-//     res.render('/login')
-// })
+app.post('/logout', (req, res) => {
+    res.clearCookie('usuario')
+    res.render('/login')
+})
 
 app.listen(port, () => console.log(`O servidor está rodando na porta ${port}`))
 

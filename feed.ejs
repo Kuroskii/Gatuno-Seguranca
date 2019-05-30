@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Gatuno</title>
+    <meta charset="utf-8">
+    <link rel="icon" href="Logo1.jpeg" type="image/x-icon"/>
+    <link rel="shortcut icon" href="Logo1.jpeg" type="image/x-icon"/>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/acesso.js"></script>
+</head>
+
+
+<body>
+    <section id="feed">
+        <h1 id="idNome"></h1>
+        <form action="http://localhost:3000/logout" method="post">
+            <button type="submit">Logout</button>
+        </form>
+    </section>
+    <script>
+        document.getElementById('idNome').innerHTML = `Bem vindo ${getCookie("usuario")}!`
+        function getCookie(name) {
+              var value = "; " + document.cookie;
+              var parts = value.split("; " + name + "=");
+              if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+    </script>
+</body>
+</html>
